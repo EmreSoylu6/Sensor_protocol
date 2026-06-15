@@ -4,14 +4,7 @@ import core.Msg;
 import exceptions.IWProtocolException;
 import exceptions.IllegalMsgException;
 
-/**
- * Update fragment acknowledgement message (type = 5).
- * 
- * Payload format: uack <ackedFragmentIndex>
- * 
- * Sent from Sensor System to Data Processing Station
- * to acknowledge receipt of a single update fragment.
- */
+// update fragment acknowledgement message
 public class SPUpdateAckMsg extends SPMsg {
     protected static final String UACK_HEADER = "uack ";
     

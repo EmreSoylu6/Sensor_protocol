@@ -10,18 +10,7 @@ import phy.PhyConfiguration;
 import phy.PhyProtocol;
 import exceptions.*;
 
-/**
- * Sensor Protocol (SP) implementation.
- * 
- * Provides reliable communication between sensor systems and the data processing station.
- * Supports three message flows:
- *   1. Measurement data: Sensor -> DPS (with ACK)
- *   2. Reconfiguration: DPS -> Sensor (with ACK)
- *   3. Firmware update: DPS -> Sensor (multi-fragment with per-fragment ACK)
- * 
- * Uses stop-and-wait ARQ with timeout and retransmission (max 3 attempts).
- * Messages are protected by CRC32 checksums.
- */
+// sensor protocol implementation
 public class SPProtocol implements Protocol {
     private static final int SP_TIMEOUT = 2000;
     private static final int MAX_RETRIES = 3;
@@ -29,61 +18,31 @@ public class SPProtocol implements Protocol {
     private final PhyProtocol phy;
     private int seqNum;
     
-    /**
-     * Create a new SPProtocol instance.
-     * 
-     * @param phy the underlying physical layer protocol
-     */
+    // create a new spprotocol instance
     public SPProtocol(PhyProtocol phy) {
         this.phy = phy;
         this.seqNum = 0;
     }
     
-    /**
-     * Get the next sequence number and increment the counter.
-     * @return the current sequence number
-     */
+    // get the next sequence number and increment the counter
     private int nextSeqNum() {
         return seqNum++;
     }
     
-    /**
-     * Send a raw string message via the PHY layer.
-     * This method creates an SP message from the string and sends it.
-     * 
-     * @param s the message string to send
-     * @param config the configuration containing destination info
-     * @throws IOException if an I/O error occurs
-     * @throws IWProtocolException if a protocol error occurs
-     */
+    // send a raw string message via the phy layer
     @Override
     public void send(String s, Configuration config) throws IOException, IWProtocolException {
         PhyConfiguration phyConfig = (PhyConfiguration) config;
         phy.send(s, phyConfig);
     }
     
-    /**
-     * Send a pre-built SP message via the PHY layer.
-     * Wraps the SP message bytes as a string and sends via PHY.
-     * 
-     * @param msg the SP message to send
-     * @param phyConfig the PHY configuration for the destination
-     * @throws IOException if an I/O error occurs
-     * @throws IWProtocolException if a protocol error occurs
-     */
+    // send a pre-built sp message via the phy layer
     public void sendMsg(SPMsg msg, PhyConfiguration phyConfig) throws IOException, IWProtocolException {
         String msgString = new String(msg.getDataBytes());
         phy.send(msgString, phyConfig);
     }
     
-    /**
-     * Receive a message from the PHY layer and parse it as an SP message.
-     * Blocks until a message is received.
-     * 
-     * @return the parsed SP message
-     * @throws IOException if an I/O error occurs
-     * @throws IWProtocolException if a protocol error occurs or checksum fails
-     */
+    // receive a message from the phy layer and parse it as an sp message
     @Override
     public Msg receive() throws IOException, IWProtocolException {
         Msg phyMsg = phy.receive();
@@ -104,14 +63,7 @@ public class SPProtocol implements Protocol {
         return parsed;
     }
     
-    /**
-     * Receive a message with a timeout.
-     * 
-     * @param timeout the timeout in milliseconds
-     * @return the parsed SP message
-     * @throws IOException if an I/O error occurs or timeout expires
-     * @throws IWProtocolException if a protocol error occurs
-     */
+    // receive a message with a timeout
     public Msg receive(int timeout) throws IOException, IWProtocolException {
         Msg phyMsg = phy.receive(timeout);
         
@@ -127,16 +79,7 @@ public class SPProtocol implements Protocol {
         return parsed;
     }
     
-    /**
-     * Send a measurement data message and wait for acknowledgement.
-     * Uses stop-and-wait ARQ with retransmission.
-     * 
-     * @param dataMsg the data message (temperature, pH, etc. must be set)
-     * @param sensorID the sensor's own ID
-     * @param phyConfig the PHY configuration for the DPS
-     * @throws IOException if an I/O error occurs
-     * @throws IWProtocolException if max retries exceeded or protocol error
-     */
+    // send a measurement data message and wait for acknowledgement
     public void sendData(SPDataMsg dataMsg, int sensorID, PhyConfiguration phyConfig) 
             throws IOException, IWProtocolException {
         int currentSeq = nextSeqNum();
@@ -166,15 +109,7 @@ public class SPProtocol implements Protocol {
         throw new IllegalMsgException();
     }
     
-    /**
-     * Send an acknowledgement for a received message.
-     * 
-     * @param ackedSeqNum the sequence number to acknowledge
-     * @param sensorID the sensor ID
-     * @param phyConfig the PHY configuration for the destination
-     * @throws IOException if an I/O error occurs
-     * @throws IWProtocolException if a protocol error occurs
-     */
+    // send an acknowledgement for a received message
     public void sendAck(int ackedSeqNum, int sensorID, PhyConfiguration phyConfig) 
             throws IOException, IWProtocolException {
         SPAckMsg ackMsg = new SPAckMsg();
@@ -185,15 +120,7 @@ public class SPProtocol implements Protocol {
         sendMsg(ackMsg, phyConfig);
     }
     
-    /**
-     * Send a reconfiguration message and wait for acknowledgement.
-     * 
-     * @param reconfMsg the reconfiguration message (frequencies must be set)
-     * @param sensorID the target sensor ID
-     * @param phyConfig the PHY configuration for the sensor
-     * @throws IOException if an I/O error occurs
-     * @throws IWProtocolException if max retries exceeded
-     */
+    // send a reconfiguration message and wait for acknowledgement
     public void sendReconf(SPReconfMsg reconfMsg, int sensorID, PhyConfiguration phyConfig) 
             throws IOException, IWProtocolException {
         int currentSeq = nextSeqNum();
@@ -220,21 +147,12 @@ public class SPProtocol implements Protocol {
         throw new IllegalMsgException();
     }
     
-    /**
-     * Send a firmware update as multiple fragments using stop-and-wait.
-     * Each fragment is sent and must be acknowledged before the next is sent.
-     * 
-     * @param updateData the complete update data string
-     * @param fragmentSize the maximum size of each fragment
-     * @param sensorID the target sensor ID
-     * @param phyConfig the PHY configuration for the sensor
-     * @throws IOException if an I/O error occurs
-     * @throws IWProtocolException if max retries exceeded for any fragment
-     */
+    // send a firmware update as multiple fragments using stop-and-wait
     public void sendUpdate(String updateData, int fragmentSize, int sensorID, PhyConfiguration phyConfig) 
             throws IOException, IWProtocolException {
         // Fragment the update data
-        int totalFragments = (int) Math.ceil((double) updateData.length() / fragmentSize);
+        int totalFragments = updateData.length() / fragmentSize;
+        if (updateData.length() % fragmentSize != 0) totalFragments++;
         
         for (int i = 0; i < totalFragments; i++) {
             int start = i * fragmentSize;
@@ -274,15 +192,7 @@ public class SPProtocol implements Protocol {
         }
     }
     
-    /**
-     * Send an update fragment acknowledgement.
-     * 
-     * @param fragmentIndex the fragment index to acknowledge
-     * @param sensorID the sensor ID
-     * @param phyConfig the PHY configuration for the destination
-     * @throws IOException if an I/O error occurs
-     * @throws IWProtocolException if a protocol error occurs
-     */
+    // send an update fragment acknowledgement
     public void sendUpdateAck(int fragmentIndex, int sensorID, PhyConfiguration phyConfig) 
             throws IOException, IWProtocolException {
         SPUpdateAckMsg uackMsg = new SPUpdateAckMsg();

@@ -7,21 +7,7 @@ import exceptions.IllegalMsgException;
 
 import java.util.zip.CRC32;
 
-/**
- * Base message class for the Sensor Protocol (SP).
- * 
- * Wire format: sp <type> <sensorID> <seqNum> <checksum> <payload>
- * 
- * The checksum (CRC32) is computed over: "<type> <sensorID> <seqNum> <payload>"
- * i.e., all fields except the checksum itself and the "sp" header.
- * 
- * Message types:
- *   1 = DATA (sensor measurement)
- *   2 = ACK (acknowledgement)
- *   3 = RECONF (reconfiguration)
- *   4 = UPDATE (firmware update fragment)
- *   5 = UPDATE_ACK (update fragment acknowledgement)
- */
+// base message class for the sensor protocol
 public class SPMsg extends Msg {
     protected static final String SP_HEADER = "sp ";
     
@@ -54,37 +40,19 @@ public class SPMsg extends Msg {
     public String getPayload() { return payload; }
     public void setPayload(String payload) { this.payload = payload; }
     
-    /**
-     * Compute CRC32 checksum over the content string.
-     * The content includes: type, sensorID, seqNum, and payload.
-     * The checksum field itself is NOT included.
-     * 
-     * @param content the string to compute checksum over
-     * @return CRC32 checksum value
-     */
+    // compute crc32 checksum over the content string
     public static long computeChecksum(String content) {
         CRC32 crc = new CRC32();
         crc.update(content.getBytes());
         return crc.getValue();
     }
     
-    /**
-     * Build the content string used for checksum computation.
-     * Format: "<type> <sensorID> <seqNum> <payload>"
-     */
+    // build the content string used for checksum computation
     protected String buildChecksumContent() {
         return type + " " + sensorID + " " + seqNum + " " + payload;
     }
     
-    /**
-     * Create the SP message by prepending the SP header and computing the checksum.
-     * The full wire format (excluding PHY header) is:
-     * sp <type> <sensorID> <seqNum> <checksum> <payload>
-     * 
-     * Subclasses should set type, sensorID, seqNum, and payload before calling super.create().
-     * 
-     * @param sentence the payload data string
-     */
+    // create the sp message by prepending the sp header and computing the checksum
     @Override
     protected void create(String sentence) {
         this.payload = sentence;
@@ -95,15 +63,7 @@ public class SPMsg extends Msg {
         this.dataBytes = fullMessage.getBytes();
     }
     
-    /**
-     * Parse an incoming SP message string.
-     * Validates the SP header, extracts fields, verifies CRC32 checksum,
-     * and dispatches to the appropriate sub-message type for further parsing.
-     * 
-     * @param sentence the raw message string (after PHY header removal)
-     * @return the parsed message object of the appropriate sub-type
-     * @throws IWProtocolException if the message is malformed or checksum fails
-     */
+    // parse an incoming sp message string
     @Override
     protected Msg parse(String sentence) throws IWProtocolException {
         this.dataBytes = sentence.getBytes();

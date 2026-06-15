@@ -4,19 +4,7 @@ import core.Msg;
 import exceptions.IWProtocolException;
 import exceptions.IllegalMsgException;
 
-/**
- * Firmware update fragment message (type = 4).
- * 
- * Payload format: update <fragmentIndex> <totalFragments> <fragmentData>
- * 
- * Sent from Data Processing Station to Sensor System.
- * Each fragment must be individually acknowledged with an UPDATE_ACK.
- * Uses stop-and-wait: next fragment is only sent after previous ACK received.
- * 
- * - fragmentIndex: 0-based index of this fragment (int)
- * - totalFragments: total number of fragments (int)
- * - fragmentData: the actual update data for this fragment (String)
- */
+// firmware update fragment message
 public class SPUpdateMsg extends SPMsg {
     protected static final String UPDATE_HEADER = "update ";
     

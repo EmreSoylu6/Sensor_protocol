@@ -8,15 +8,7 @@ import phy.PhyProtocol;
 import sp.*;
 import exceptions.IWProtocolException;
 
-/**
- * Data Processing Station (server) application.
- * 
- * Receives measurement data from arbitrary many sensor systems,
- * prints the data to screen, and sends acknowledgements back.
- * 
- * Usage: java apps.SPServer [port]
- *   port: optional server port (default: 4999)
- */
+// server app that gets sensor data
 public class SPServer {
     protected static final int DEFAULT_SERVER_PORT = 4999;
     
@@ -52,10 +44,10 @@ public class SPServer {
                     // Print measurement data
                     System.out.println("[DATA from Sensor " + dataMsg.getSensorID() + "]");
                     System.out.println("  Seq#:             " + dataMsg.getSeqNum());
-                    System.out.println("  Temperature:      " + String.format("%.2f", dataMsg.getTemperature()) + " °C");
-                    System.out.println("  pH:               " + String.format("%.2f", dataMsg.getPH()));
-                    System.out.println("  Dissolved Oxygen: " + String.format("%.2f", dataMsg.getDissolvedOxygen()) + " mg/L");
-                    System.out.println("  Turbidity:        " + String.format("%.2f", dataMsg.getTurbidity()) + " NTU");
+                    System.out.println("  Temperature:      " + dataMsg.getTemperature() + " °C");
+                    System.out.println("  pH:               " + dataMsg.getPH());
+                    System.out.println("  Dissolved Oxygen: " + dataMsg.getDissolvedOxygen() + " mg/L");
+                    System.out.println("  Turbidity:        " + dataMsg.getTurbidity() + " NTU");
                     System.out.println("  Timestamp:        " + dataMsg.getTimestamp());
                     System.out.println("  CRC32:            " + dataMsg.getChecksum());
                     

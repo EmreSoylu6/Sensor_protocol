@@ -4,17 +4,7 @@ import core.Msg;
 import exceptions.IWProtocolException;
 import exceptions.IllegalMsgException;
 
-/**
- * Reconfiguration message (type = 3).
- * 
- * Payload format: reconf <measurementFrequency> <messageFrequency>
- * 
- * Sent from Data Processing Station to Sensor System.
- * Must be acknowledged with an ACK message.
- * 
- * - measurementFrequency: interval between measurements in seconds (int)
- * - messageFrequency: interval between message transmissions in seconds (int)
- */
+// reconfiguration message
 public class SPReconfMsg extends SPMsg {
     protected static final String RECONF_HEADER = "reconf ";
     

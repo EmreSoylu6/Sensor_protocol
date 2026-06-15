@@ -12,16 +12,7 @@ import sp.SPDataMsg;
 import sp.SPProtocol;
 import exceptions.IWProtocolException;
 
-/**
- * Sensor system client application.
- * 
- * Simulates a water quality sensor that periodically measures
- * environmental parameters and sends them to the data processing station.
- * 
- * Usage: java apps.SPClient <sensorID> [serverPort]
- *   sensorID:   unique identifier for this sensor (int)
- *   serverPort: optional server port (default: 4999)
- */
+// client app for the sensor system
 public class SPClient {
     private static final String SERVERNAME = "localhost";
     private static final int DEFAULT_SERVER_PORT = 4999;
@@ -93,10 +84,10 @@ public class SPClient {
             
             measurementCount++;
             System.out.println("[Measurement #" + measurementCount + "]");
-            System.out.println("  Temperature:      " + String.format("%.2f", dataMsg.getTemperature()) + " °C");
-            System.out.println("  pH:               " + String.format("%.2f", dataMsg.getPH()));
-            System.out.println("  Dissolved Oxygen: " + String.format("%.2f", dataMsg.getDissolvedOxygen()) + " mg/L");
-            System.out.println("  Turbidity:        " + String.format("%.2f", dataMsg.getTurbidity()) + " NTU");
+            System.out.println("  Temperature:      " + dataMsg.getTemperature() + " °C");
+            System.out.println("  pH:               " + dataMsg.getPH());
+            System.out.println("  Dissolved Oxygen: " + dataMsg.getDissolvedOxygen() + " mg/L");
+            System.out.println("  Turbidity:        " + dataMsg.getTurbidity() + " NTU");
             System.out.println("  Timestamp:        " + dataMsg.getTimestamp());
             
             try {

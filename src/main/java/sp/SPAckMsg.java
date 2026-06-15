@@ -4,13 +4,7 @@ import core.Msg;
 import exceptions.IWProtocolException;
 import exceptions.IllegalMsgException;
 
-/**
- * Acknowledgement message (type = 2).
- * 
- * Payload format: ack <ackedSeqNum>
- * 
- * Used to acknowledge receipt of DATA or RECONF messages.
- */
+// acknowledgement message
 public class SPAckMsg extends SPMsg {
     protected static final String ACK_HEADER = "ack ";
     
@@ -23,24 +17,14 @@ public class SPAckMsg extends SPMsg {
     public int getAckedSeqNum() { return ackedSeqNum; }
     public void setAckedSeqNum(int ackedSeqNum) { this.ackedSeqNum = ackedSeqNum; }
     
-    /**
-     * Create an ACK message.
-     * 
-     * @param sentence unused (values come from setters)
-     */
+    // create an ack message
     @Override
     protected void create(String sentence) {
         this.payload = ACK_HEADER + ackedSeqNum;
         super.create(this.payload);
     }
     
-    /**
-     * Parse an incoming ACK message.
-     * 
-     * @param sentence the full SP message string
-     * @return this parsed message
-     * @throws IWProtocolException if the message is malformed
-     */
+    // parse an incoming ack message
     @Override
     protected Msg parse(String sentence) throws IWProtocolException {
         this.dataBytes = sentence.getBytes();

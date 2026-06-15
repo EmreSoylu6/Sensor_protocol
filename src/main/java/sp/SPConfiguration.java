@@ -2,17 +2,11 @@ package sp;
 
 import core.Configuration;
 
-/**
- * Configuration class for the Sensor Protocol (SP).
- * Holds the sensor ID used to address a specific sensor system.
- */
+// config for sp
 public class SPConfiguration extends Configuration {
     private int sensorID;
 
-    /**
-     * Create a new SP configuration.
-     * @param sensorID the sensor system identifier
-     */
+    // create a new sp configuration
     public SPConfiguration(int sensorID) {
         this.sensorID = sensorID;
     }

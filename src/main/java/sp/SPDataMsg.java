@@ -4,17 +4,7 @@ import core.Msg;
 import exceptions.IWProtocolException;
 import exceptions.IllegalMsgException;
 
-/**
- * Sensor measurement data message (type = 1).
- * 
- * Payload format: data <temperature> <pH> <dissolvedOxygen> <turbidity> <timestamp>
- * 
- * - temperature: water temperature in °C (float)
- * - pH: pH value 0-14 (float)  
- * - dissolvedOxygen: dissolved oxygen in mg/L (float)
- * - turbidity: turbidity in NTU (float)
- * - timestamp: measurement timestamp in ms since epoch (long)
- */
+// sensor measurement data message
 public class SPDataMsg extends SPMsg {
     protected static final String DATA_HEADER = "data ";
     
@@ -44,28 +34,14 @@ public class SPDataMsg extends SPMsg {
     public long getTimestamp() { return timestamp; }
     public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
     
-    /**
-     * Create a data message with measurement values.
-     * Sets the payload to: data <temp> <pH> <DO> <turbidity> <timestamp>
-     * then delegates to superclass for header and checksum.
-     * 
-     * @param sentence unused (values come from setters)
-     */
+    // create a data message with measurement values
     @Override
     protected void create(String sentence) {
         this.payload = DATA_HEADER + temperature + " " + pH + " " + dissolvedOxygen + " " + turbidity + " " + timestamp;
         super.create(this.payload);
     }
     
-    /**
-     * Parse an incoming data message.
-     * Extracts measurement values from the payload.
-     * Checksum has already been validated by SPMsg.parse().
-     * 
-     * @param sentence the full SP message string
-     * @return this parsed message
-     * @throws IWProtocolException if the message is malformed
-     */
+    // parse an incoming data message
     @Override
     protected Msg parse(String sentence) throws IWProtocolException {
         this.dataBytes = sentence.getBytes();
