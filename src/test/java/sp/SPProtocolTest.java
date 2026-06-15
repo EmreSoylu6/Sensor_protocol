@@ -21,6 +21,18 @@ import phy.PhyProtocol;
 // unit tests for spprotocol using mockito to mock the phy layer
 class SPProtocolTest {
 
+    // Helper class to expose the protected PhyMsg constructor and parse method for testing
+    static class TestPhyMsg extends PhyMsg {
+        public TestPhyMsg(PhyConfiguration config) {
+            super(config);
+        }
+
+        @Override
+        public core.Msg parse(String sentence) throws IllegalMsgException {
+            return super.parse(sentence);
+        }
+    }
+
     int sensorID = 100;
     int clientPort = 5100;
     String clientName = "localhost";
@@ -28,14 +40,14 @@ class SPProtocolTest {
     String serverName = "localhost";
 
     PhyProtocol phyProtocolMock;
-    PhyMsg testMsg;
+    TestPhyMsg testMsg;
 
     @BeforeEach
     void setup() {
         PhyConfiguration phyConfig;
         try {
             phyConfig = new PhyConfiguration(InetAddress.getByName(clientName), clientPort, Protocol.proto_id.SP);
-            testMsg = new PhyMsg(phyConfig);
+            testMsg = new TestPhyMsg(phyConfig);
         } catch (UnknownHostException e) {
             fail("Setup failed: " + e.getMessage());
         }
@@ -61,7 +73,7 @@ class SPProtocolTest {
         String spMsgStr = new String(dataMsg.getDataBytes());
 
         // Wrap in PHY message
-        testMsg = (PhyMsg) testMsg.parse("phy 9 " + spMsgStr);
+        testMsg = (TestPhyMsg) testMsg.parse("phy 9 " + spMsgStr);
 
         when(phyProtocolMock.receive()).thenReturn(testMsg);
 
@@ -84,7 +96,7 @@ class SPProtocolTest {
         ackMsg.create(null);
 
         String spMsgStr = new String(ackMsg.getDataBytes());
-        testMsg = (PhyMsg) testMsg.parse("phy 9 " + spMsgStr);
+        testMsg = (TestPhyMsg) testMsg.parse("phy 9 " + spMsgStr);
 
         when(phyProtocolMock.receive(anyInt())).thenReturn(testMsg);
 
@@ -105,8 +117,8 @@ class SPProtocolTest {
             fail("Setup failed");
             return;
         }
-        PhyMsg slpMsg = new PhyMsg(slpConfig);
-        slpMsg = (PhyMsg) slpMsg.parse("phy 5 slp reg req 5000");
+        TestPhyMsg slpMsg = new TestPhyMsg(slpConfig);
+        slpMsg = (TestPhyMsg) slpMsg.parse("phy 5 slp reg req 5000");
 
         when(phyProtocolMock.receive()).thenReturn(slpMsg);
 
@@ -126,7 +138,7 @@ class SPProtocolTest {
         ackResponse.create(null);
 
         String ackStr = new String(ackResponse.getDataBytes());
-        PhyMsg phyAck = (PhyMsg) testMsg.parse("phy 9 " + ackStr);
+        TestPhyMsg phyAck = (TestPhyMsg) testMsg.parse("phy 9 " + ackStr);
 
         when(phyProtocolMock.receive(anyInt())).thenReturn(phyAck);
 
@@ -256,7 +268,7 @@ class SPProtocolTest {
         ackResponse.create(null);
 
         String ackStr = new String(ackResponse.getDataBytes());
-        PhyMsg phyAck = (PhyMsg) testMsg.parse("phy 9 " + ackStr);
+        TestPhyMsg phyAck = (TestPhyMsg) testMsg.parse("phy 9 " + ackStr);
 
         // First call times out, second succeeds
         when(phyProtocolMock.receive(anyInt()))
@@ -294,8 +306,8 @@ class SPProtocolTest {
             fail("Setup failed");
             return;
         }
-        PhyMsg corruptedMsg = new PhyMsg(slpConfig);
-        corruptedMsg = (PhyMsg) corruptedMsg.parse("phy 5 slp reg req 5000");
+        TestPhyMsg corruptedMsg = new TestPhyMsg(slpConfig);
+        corruptedMsg = (TestPhyMsg) corruptedMsg.parse("phy 5 slp reg req 5000");
 
         // After 3 corrupted messages, should give up
         when(phyProtocolMock.receive(anyInt())).thenReturn(corruptedMsg);
