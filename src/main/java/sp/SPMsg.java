@@ -1,0 +1,171 @@
+package sp;
+
+import core.Msg;
+import exceptions.BadChecksumException;
+import exceptions.IWProtocolException;
+import exceptions.IllegalMsgException;
+
+import java.util.zip.CRC32;
+
+/**
+ * Base message class for the Sensor Protocol (SP).
+ * 
+ * Wire format: sp <type> <sensorID> <seqNum> <checksum> <payload>
+ * 
+ * The checksum (CRC32) is computed over: "<type> <sensorID> <seqNum> <payload>"
+ * i.e., all fields except the checksum itself and the "sp" header.
+ * 
+ * Message types:
+ *   1 = DATA (sensor measurement)
+ *   2 = ACK (acknowledgement)
+ *   3 = RECONF (reconfiguration)
+ *   4 = UPDATE (firmware update fragment)
+ *   5 = UPDATE_ACK (update fragment acknowledgement)
+ */
+public class SPMsg extends Msg {
+    protected static final String SP_HEADER = "sp ";
+    
+    // Message type constants
+    public static final int TYPE_DATA = 1;
+    public static final int TYPE_ACK = 2;
+    public static final int TYPE_RECONF = 3;
+    public static final int TYPE_UPDATE = 4;
+    public static final int TYPE_UPDATE_ACK = 5;
+    
+    protected int type;
+    protected int sensorID;
+    protected int seqNum;
+    protected long checksum;
+    protected String payload;
+    
+    public SPMsg() {}
+    
+    public int getType() { return type; }
+    public void setType(int type) { this.type = type; }
+    
+    public int getSensorID() { return sensorID; }
+    public void setSensorID(int sensorID) { this.sensorID = sensorID; }
+    
+    public int getSeqNum() { return seqNum; }
+    public void setSeqNum(int seqNum) { this.seqNum = seqNum; }
+    
+    public long getChecksum() { return checksum; }
+    
+    public String getPayload() { return payload; }
+    public void setPayload(String payload) { this.payload = payload; }
+    
+    /**
+     * Compute CRC32 checksum over the content string.
+     * The content includes: type, sensorID, seqNum, and payload.
+     * The checksum field itself is NOT included.
+     * 
+     * @param content the string to compute checksum over
+     * @return CRC32 checksum value
+     */
+    public static long computeChecksum(String content) {
+        CRC32 crc = new CRC32();
+        crc.update(content.getBytes());
+        return crc.getValue();
+    }
+    
+    /**
+     * Build the content string used for checksum computation.
+     * Format: "<type> <sensorID> <seqNum> <payload>"
+     */
+    protected String buildChecksumContent() {
+        return type + " " + sensorID + " " + seqNum + " " + payload;
+    }
+    
+    /**
+     * Create the SP message by prepending the SP header and computing the checksum.
+     * The full wire format (excluding PHY header) is:
+     * sp <type> <sensorID> <seqNum> <checksum> <payload>
+     * 
+     * Subclasses should set type, sensorID, seqNum, and payload before calling super.create().
+     * 
+     * @param sentence the payload data string
+     */
+    @Override
+    protected void create(String sentence) {
+        this.payload = sentence;
+        String checksumContent = buildChecksumContent();
+        this.checksum = computeChecksum(checksumContent);
+        String fullMessage = SP_HEADER + type + " " + sensorID + " " + seqNum + " " + checksum + " " + payload;
+        this.data = fullMessage;
+        this.dataBytes = fullMessage.getBytes();
+    }
+    
+    /**
+     * Parse an incoming SP message string.
+     * Validates the SP header, extracts fields, verifies CRC32 checksum,
+     * and dispatches to the appropriate sub-message type for further parsing.
+     * 
+     * @param sentence the raw message string (after PHY header removal)
+     * @return the parsed message object of the appropriate sub-type
+     * @throws IWProtocolException if the message is malformed or checksum fails
+     */
+    @Override
+    protected Msg parse(String sentence) throws IWProtocolException {
+        this.dataBytes = sentence.getBytes();
+        
+        // Check SP header
+        if (!sentence.startsWith(SP_HEADER)) {
+            throw new IllegalMsgException();
+        }
+        
+        // Remove SP header
+        String content = sentence.substring(SP_HEADER.length());
+        
+        // Split into: type, sensorID, seqNum, checksum, payload...
+        String[] parts = content.split("\\s+", 5);
+        if (parts.length < 5) {
+            throw new IllegalMsgException();
+        }
+        
+        try {
+            this.type = Integer.parseInt(parts[0]);
+            this.sensorID = Integer.parseInt(parts[1]);
+            this.seqNum = Integer.parseInt(parts[2]);
+            this.checksum = Long.parseLong(parts[3]);
+        } catch (NumberFormatException e) {
+            throw new IllegalMsgException();
+        }
+        
+        this.payload = parts[4];
+        
+        // Verify checksum
+        String checksumContent = buildChecksumContent();
+        long computedChecksum = computeChecksum(checksumContent);
+        if (computedChecksum != this.checksum) {
+            throw new BadChecksumException(this.checksum, computedChecksum);
+        }
+        
+        // Dispatch to appropriate sub-message type
+        SPMsg pdu;
+        switch (this.type) {
+            case TYPE_DATA -> {
+                pdu = new SPDataMsg();
+                pdu = (SPMsg) pdu.parse(SP_HEADER + content);
+            }
+            case TYPE_ACK -> {
+                pdu = new SPAckMsg();
+                pdu = (SPMsg) pdu.parse(SP_HEADER + content);
+            }
+            case TYPE_RECONF -> {
+                pdu = new SPReconfMsg();
+                pdu = (SPMsg) pdu.parse(SP_HEADER + content);
+            }
+            case TYPE_UPDATE -> {
+                pdu = new SPUpdateMsg();
+                pdu = (SPMsg) pdu.parse(SP_HEADER + content);
+            }
+            case TYPE_UPDATE_ACK -> {
+                pdu = new SPUpdateAckMsg();
+                pdu = (SPMsg) pdu.parse(SP_HEADER + content);
+            }
+            default -> throw new IllegalMsgException();
+        }
+        
+        return pdu;
+    }
+}
