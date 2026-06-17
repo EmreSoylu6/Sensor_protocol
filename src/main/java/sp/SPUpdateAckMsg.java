@@ -4,7 +4,7 @@ import core.Msg;
 import exceptions.IWProtocolException;
 import exceptions.IllegalMsgException;
 
-// update fragment acknowledgement message
+// Bestätigungsnachricht (ACK) für ein Update-Fragment
 public class SPUpdateAckMsg extends SPMsg {
     protected static final String UACK_HEADER = "uack ";
     
@@ -49,7 +49,7 @@ public class SPUpdateAckMsg extends SPMsg {
         this.payload = parts[4];
         this.data = this.payload;
         
-        // Parse payload: uack <fragIndex>
+        // Payload auswerten: uack <fragIndex>
         if (!this.payload.startsWith(UACK_HEADER)) {
             throw new IllegalMsgException();
         }

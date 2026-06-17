@@ -7,11 +7,11 @@ import exceptions.IllegalMsgException;
 
 import java.util.zip.CRC32;
 
-// base message class for the sensor protocol
+// Basis-Nachrichtenklasse für das Sensor-Protokoll
 public class SPMsg extends Msg {
     protected static final String SP_HEADER = "sp ";
     
-    // Message type constants
+    // Konstanten für Nachrichtentypen
     public static final int TYPE_DATA = 1;
     public static final int TYPE_ACK = 2;
     public static final int TYPE_RECONF = 3;
@@ -40,19 +40,19 @@ public class SPMsg extends Msg {
     public String getPayload() { return payload; }
     public void setPayload(String payload) { this.payload = payload; }
     
-    // compute crc32 checksum over the content string
+    // Berechnet die CRC32-Prüfsumme über den übergebenen String
     public static long computeChecksum(String content) {
         CRC32 crc = new CRC32();
         crc.update(content.getBytes());
         return crc.getValue();
     }
     
-    // build the content string used for checksum computation
+    // Baut den String zusammen, über den die Prüfsumme berechnet wird
     protected String buildChecksumContent() {
         return type + " " + sensorID + " " + seqNum + " " + payload;
     }
     
-    // create the sp message by prepending the sp header and computing the checksum
+    // Erstellt die SP-Nachricht (fügt Header an und berechnet Prüfsumme)
     @Override
     protected void create(String sentence) {
         this.payload = sentence;
@@ -63,20 +63,20 @@ public class SPMsg extends Msg {
         this.dataBytes = fullMessage.getBytes();
     }
     
-    // parse an incoming sp message string
+    // Parst einen eingehenden SP-Nachrichten-String
     @Override
     protected Msg parse(String sentence) throws IWProtocolException {
         this.dataBytes = sentence.getBytes();
         
-        // Check SP header
+        // SP-Header prüfen
         if (!sentence.startsWith(SP_HEADER)) {
             throw new IllegalMsgException();
         }
         
-        // Remove SP header
+        // SP-Header entfernen
         String content = sentence.substring(SP_HEADER.length());
         
-        // Split into: type, sensorID, seqNum, checksum, payload...
+        // Aufteilen in: type, sensorID, seqNum, checksum, payload...
         String[] parts = content.split("\\s+", 5);
         if (parts.length < 5) {
             throw new IllegalMsgException();
@@ -93,14 +93,14 @@ public class SPMsg extends Msg {
         
         this.payload = parts[4];
         
-        // Verify checksum
+        // Prüfsumme abgleichen
         String checksumContent = buildChecksumContent();
         long computedChecksum = computeChecksum(checksumContent);
         if (computedChecksum != this.checksum) {
             throw new BadChecksumException(this.checksum, computedChecksum);
         }
         
-        // Dispatch to appropriate sub-message type
+        // An den passenden Unter-Nachrichtentyp delegieren
         SPMsg pdu;
         switch (this.type) {
             case TYPE_DATA -> {

@@ -4,7 +4,7 @@ import core.Msg;
 import exceptions.IWProtocolException;
 import exceptions.IllegalMsgException;
 
-// firmware update fragment message
+// Firmware-Update-Fragment-Nachricht
 public class SPUpdateMsg extends SPMsg {
     protected static final String UPDATE_HEADER = "update ";
     
@@ -57,7 +57,7 @@ public class SPUpdateMsg extends SPMsg {
         this.payload = parts[4];
         this.data = this.payload;
         
-        // Parse payload: update <fragIndex> <totalFragments> <fragmentData>
+        // Payload auswerten: update <fragIndex> <totalFragments> <fragmentData>
         if (!this.payload.startsWith(UPDATE_HEADER)) {
             throw new IllegalMsgException();
         }

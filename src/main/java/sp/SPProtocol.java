@@ -10,7 +10,7 @@ import phy.PhyConfiguration;
 import phy.PhyProtocol;
 import exceptions.*;
 
-// sensor protocol implementation
+// Implementierung des Sensor-Protokolls
 public class SPProtocol implements Protocol {
     private static final int SP_TIMEOUT = 2000;
     private static final int MAX_RETRIES = 3;
@@ -18,52 +18,52 @@ public class SPProtocol implements Protocol {
     private final PhyProtocol phy;
     private int seqNum;
     
-    // create a new spprotocol instance
+    // Erstellt eine neue SPProtocol-Instanz
     public SPProtocol(PhyProtocol phy) {
         this.phy = phy;
         this.seqNum = 0;
     }
     
-    // get the next sequence number and increment the counter
+    // Holt die nächste Sequenznummer und erhöht den Zähler
     private int nextSeqNum() {
         return seqNum++;
     }
     
-    // send a raw string message via the phy layer
+    // Sendet eine rohe String-Nachricht über die PHY-Schicht
     @Override
     public void send(String s, Configuration config) throws IOException, IWProtocolException {
         PhyConfiguration phyConfig = (PhyConfiguration) config;
         phy.send(s, phyConfig);
     }
     
-    // send a pre-built sp message via the phy layer
+    // Sendet eine fertig gebaute SP-Nachricht über die PHY-Schicht
     public void sendMsg(SPMsg msg, PhyConfiguration phyConfig) throws IOException, IWProtocolException {
         String msgString = new String(msg.getDataBytes());
         phy.send(msgString, phyConfig);
     }
     
-    // receive a message from the phy layer and parse it as an sp message
+    // Empfängt eine Nachricht von der PHY-Schicht und parst sie als SP-Nachricht
     @Override
     public Msg receive() throws IOException, IWProtocolException {
         Msg phyMsg = phy.receive();
         
-        // Check demux: only process SP messages (proto_id = SP)
+        // Demultiplexen: Nur SP-Nachrichten verarbeiten (proto_id = SP)
         PhyConfiguration phyConfig = (PhyConfiguration) phyMsg.getConfiguration();
         if (phyConfig.getPid() != proto_id.SP) {
             throw new IllegalMsgException();
         }
         
-        // Parse the SP message from the PHY payload
+        // SP-Nachricht aus der PHY-Payload parsen
         SPMsg spMsg = new SPMsg();
         SPMsg parsed = (SPMsg) spMsg.parse(phyMsg.getData());
         
-        // Carry over the PHY configuration so we know who sent it
+        // PHY-Konfiguration übernehmen, damit wir wissen, wer gesendet hat
         parsed.setConfiguration(phyConfig);
         
         return parsed;
     }
     
-    // receive a message with a timeout
+    // Empfängt eine Nachricht mit Timeout
     public Msg receive(int timeout) throws IOException, IWProtocolException {
         Msg phyMsg = phy.receive(timeout);
         
@@ -79,7 +79,7 @@ public class SPProtocol implements Protocol {
         return parsed;
     }
     
-    // send a measurement data message and wait for acknowledgement
+    // Sendet eine Messdaten-Nachricht und wartet auf eine Bestätigung (ACK)
     public void sendData(SPDataMsg dataMsg, int sensorID, PhyConfiguration phyConfig) 
             throws IOException, IWProtocolException {
         int currentSeq = nextSeqNum();
@@ -92,24 +92,24 @@ public class SPProtocol implements Protocol {
             try {
                 sendMsg(dataMsg, phyConfig);
                 
-                // Wait for ACK
+                // Auf ACK warten
                 Msg response = receive(SP_TIMEOUT);
                 if (response instanceof SPAckMsg ackMsg) {
                     if (ackMsg.getAckedSeqNum() == currentSeq) {
-                        return; // Success
+                        return; // Erfolg
                     }
                 }
             } catch (SocketTimeoutException e) {
                 attempts++;
             } catch (IWProtocolException e) {
-                // Malformed response, retry
+                // Fehlerhafte Antwort, nochmal versuchen
                 attempts++;
             }
         }
         throw new IllegalMsgException();
     }
     
-    // send an acknowledgement for a received message
+    // Sendet ein ACK für eine empfangene Nachricht
     public void sendAck(int ackedSeqNum, int sensorID, PhyConfiguration phyConfig) 
             throws IOException, IWProtocolException {
         SPAckMsg ackMsg = new SPAckMsg();
@@ -120,7 +120,7 @@ public class SPProtocol implements Protocol {
         sendMsg(ackMsg, phyConfig);
     }
     
-    // send a reconfiguration message and wait for acknowledgement
+    // Sendet eine Rekonfigurationsnachricht und wartet auf ein ACK
     public void sendReconf(SPReconfMsg reconfMsg, int sensorID, PhyConfiguration phyConfig) 
             throws IOException, IWProtocolException {
         int currentSeq = nextSeqNum();
@@ -147,10 +147,10 @@ public class SPProtocol implements Protocol {
         throw new IllegalMsgException();
     }
     
-    // send a firmware update as multiple fragments using stop-and-wait
+    // Sendet ein Firmware-Update in mehreren Fragmenten (Stop-and-Wait)
     public void sendUpdate(String updateData, int fragmentSize, int sensorID, PhyConfiguration phyConfig) 
             throws IOException, IWProtocolException {
-        // Fragment the update data
+        // Update-Daten in Fragmente zerlegen
         int totalFragments = updateData.length() / fragmentSize;
         if (updateData.length() % fragmentSize != 0) totalFragments++;
         
@@ -168,7 +168,7 @@ public class SPProtocol implements Protocol {
             updateMsg.setFragmentData(fragmentData);
             updateMsg.create(null);
             
-            // Stop-and-wait for this fragment
+            // Stop-and-Wait für dieses Fragment
             int attempts = 0;
             boolean acked = false;
             while (attempts < MAX_RETRIES && !acked) {
@@ -192,7 +192,7 @@ public class SPProtocol implements Protocol {
         }
     }
     
-    // send an update fragment acknowledgement
+    // Sendet ein ACK für ein Update-Fragment
     public void sendUpdateAck(int fragmentIndex, int sensorID, PhyConfiguration phyConfig) 
             throws IOException, IWProtocolException {
         SPUpdateAckMsg uackMsg = new SPUpdateAckMsg();

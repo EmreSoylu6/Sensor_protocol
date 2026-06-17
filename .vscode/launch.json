@@ -1,0 +1,47 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "SPServer",
+            "request": "launch",
+            "mainClass": "apps.SPServer",
+            "projectName": "Internetworking"
+        },
+        {
+            "type": "java",
+            "name": "SPClient",
+            "request": "launch",
+            "mainClass": "apps.SPClient",
+            "projectName": "Internetworking"
+        },
+        {
+            "type": "java",
+            "name": "SLPSwitch",
+            "request": "launch",
+            "mainClass": "apps.SLPSwitch",
+            "projectName": "Internetworking"
+        },
+        {
+            "type": "java",
+            "name": "SLPClient",
+            "request": "launch",
+            "mainClass": "apps.SLPClient",
+            "projectName": "Internetworking"
+        },
+        {
+            "type": "java",
+            "name": "SimplexPhyServer",
+            "request": "launch",
+            "mainClass": "apps.SimplexPhyServer",
+            "projectName": "Internetworking"
+        },
+        {
+            "type": "java",
+            "name": "SimplexPhyClient",
+            "request": "launch",
+            "mainClass": "apps.SimplexPhyClient",
+            "projectName": "Internetworking"
+        }
+    ]
+}

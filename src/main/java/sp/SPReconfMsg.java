@@ -4,7 +4,7 @@ import core.Msg;
 import exceptions.IWProtocolException;
 import exceptions.IllegalMsgException;
 
-// reconfiguration message
+// Rekonfigurationsnachricht
 public class SPReconfMsg extends SPMsg {
     protected static final String RECONF_HEADER = "reconf ";
     
@@ -53,7 +53,7 @@ public class SPReconfMsg extends SPMsg {
         this.payload = parts[4];
         this.data = this.payload;
         
-        // Parse payload: reconf <measFreq> <msgFreq>
+        // Payload auswerten: reconf <measFreq> <msgFreq>
         if (!this.payload.startsWith(RECONF_HEADER)) {
             throw new IllegalMsgException();
         }

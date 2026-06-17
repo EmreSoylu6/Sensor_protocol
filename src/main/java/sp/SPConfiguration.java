@@ -2,11 +2,11 @@ package sp;
 
 import core.Configuration;
 
-// config for sp
+// Konfiguration für SP
 public class SPConfiguration extends Configuration {
     private int sensorID;
 
-    // create a new sp configuration
+    // Erstellt eine neue SP-Konfiguration
     public SPConfiguration(int sensorID) {
         this.sensorID = sensorID;
     }

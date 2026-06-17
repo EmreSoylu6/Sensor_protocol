@@ -1,208 +1,208 @@
-# Internetworking — Sensor Protocol (SP) Implementation
+# Internetworking — Sensor Protocol (SP) Implementierung
 
-## Team Members
+## Teammitglieder
 
 | Emre Soylu | 819689 | ComputerNetzwerke |
 |------|-----------|----------------|
-| [Your Name] | [Your ID] | [Your Programme] |
-| [Team Member 2] | [Their ID] | [Their Programme] |
+| [Dein Name] | [Deine Matrikelnummer] | [Dein Studiengang] |
+| [Teammitglied 2] | [Dessen Matrikelnummer] | [Dessen Studiengang] |
 
-> **Note:** Please fill in the team member details above before submitting.
+> **Hinweis:** Bitte die Details der Teammitglieder oben vor der Abgabe noch ausfüllen.
 
 ---
 
-## Project Overview
+## Projektübersicht
 
-This project implements the **Sensor Protocol (SP)**, a communication protocol for water quality monitoring systems. The protocol enables reliable data exchange between field-deployed Sensor Systems (SS) and a central Data Processing Station (DPS).
+Dieses Projekt implementiert das **Sensor Protocol (SP)**, ein Kommunikationsprotokoll für Systeme zur Überwachung der Wasserqualität. Das Protokoll ermöglicht einen zuverlässigen Datenaustausch zwischen im Feld eingesetzten Sensorsystemen (SS) und einer zentralen Datenverarbeitungsstation (Data Processing Station, DPS).
 
 ### Features
 
-- **Measurement Data Transfer** — Sensors send water quality measurements (temperature, pH, dissolved oxygen, turbidity) to the DPS with acknowledgement
-- **Reconfiguration** — DPS can remotely adjust sensor measurement and message frequencies
-- **Firmware Update** — DPS can send large firmware updates using multi-fragment transfer with per-fragment acknowledgements
-- **Error Handling** — CRC32 integrity checking, timeout-based retransmission (stop-and-wait ARQ, max 3 retries)
-- **Extensibility** — New message types can be added by extending the `SPMsg` base class
+- **Messdatenübertragung** — Sensoren senden Messwerte zur Wasserqualität (Temperatur, pH-Wert, gelöster Sauerstoff, Trübung) mit Bestätigung (ACK) an die DPS.
+- **Rekonfiguration** — Die DPS kann die Mess- und Sendeintervalle der Sensoren aus der Ferne anpassen.
+- **Firmware-Updates** — Die DPS kann große Firmware-Updates über eine fragmentierte Übertragung senden, wobei jedes Fragment einzeln bestätigt wird.
+- **Fehlerbehandlung** — Integritätsprüfung per CRC32, zeitgesteuerte Neuübertragung (Stop-and-Wait ARQ, max. 3 Versuche).
+- **Erweiterbarkeit** — Neue Nachrichtentypen können einfach durch Ableiten der Basisklasse `SPMsg` hinzugefügt werden.
 
 ---
 
-## Project Structure
+## Projektstruktur
 
 ```
 src/
 ├── main/java/
-│   ├── apps/                          # Application layer
-│   │   ├── SPClient.java             # Sensor system client application
-│   │   ├── SPServer.java             # Data processing station server
-│   │   ├── SimplexPhyClient.java     # [Framework] PHY client example
-│   │   ├── SimplexPhyServer.java     # [Framework] PHY server example
-│   │   ├── SLPClient.java           # [Framework] SLP client
-│   │   └── SLPSwitch.java           # [Framework] SLP switch
-│   ├── core/                          # [Framework] Core abstractions
-│   │   ├── Configuration.java        # Base configuration class
-│   │   ├── Msg.java                  # Abstract message base class
-│   │   └── Protocol.java            # Protocol interface
-│   ├── exceptions/                    # [Framework] Exception classes
-│   │   ├── BadChecksumException.java # CRC checksum mismatch
-│   │   ├── IWProtocolException.java  # Base protocol exception
-│   │   ├── IllegalMsgException.java  # Malformed message
-│   │   └── ...                       # Other exceptions
-│   ├── phy/                           # [Framework] Physical layer
-│   │   ├── PhyConfiguration.java     # PHY configuration (IP, port, proto ID)
-│   │   ├── PhyMsg.java              # PHY message (header: "phy <id> <data>")
-│   │   ├── PhyPingMsg.java          # PHY ping message
-│   │   └── PhyProtocol.java         # PHY protocol (UDP sockets)
+│   ├── apps/                          # Anwendungsschicht
+│   │   ├── SPClient.java             # Client-Anwendung für das Sensorsystem
+│   │   ├── SPServer.java             # Server der Datenverarbeitungsstation
+│   │   ├── SimplexPhyClient.java     # [Framework] Beispiel-Client für PHY
+│   │   ├── SimplexPhyServer.java     # [Framework] Beispiel-Server für PHY
+│   │   ├── SLPClient.java           # [Framework] SLP Client
+│   │   └── SLPSwitch.java           # [Framework] SLP Switch
+│   ├── core/                          # [Framework] Abstrakte Basisklassen
+│   │   ├── Configuration.java        # Basis-Konfigurationsklasse
+│   │   ├── Msg.java                  # Abstrakte Nachrichten-Basisklasse
+│   │   └── Protocol.java            # Protokoll-Interface
+│   ├── exceptions/                    # [Framework] Exception-Klassen
+│   │   ├── BadChecksumException.java # Fehler bei CRC-Prüfsumme
+│   │   ├── IWProtocolException.java  # Basis-Exception fürs Protokoll
+│   │   ├── IllegalMsgException.java  # Ungültige/Fehlerhafte Nachricht
+│   │   └── ...                       # Weitere Exceptions
+│   ├── phy/                           # [Framework] Bitübertragungsschicht (Physical Layer)
+│   │   ├── PhyConfiguration.java     # PHY Konfig (IP, Port, Proto-ID)
+│   │   ├── PhyMsg.java              # PHY Nachricht (Header: "phy <id> <data>")
+│   │   ├── PhyPingMsg.java          # PHY Ping-Nachricht
+│   │   └── PhyProtocol.java         # PHY Protokoll (UDP Sockets)
 │   ├── slp/                           # [Framework] Simple Link Protocol
-│   │   └── ...                       # SLP classes
-│   └── sp/                            # ★ Sensor Protocol (our implementation)
-│       ├── SPConfiguration.java      # SP configuration (sensor ID)
-│       ├── SPMsg.java                # Base SP message with CRC32
-│       ├── SPDataMsg.java            # Measurement data message (type=1)
-│       ├── SPAckMsg.java             # Acknowledgement message (type=2)
-│       ├── SPReconfMsg.java          # Reconfiguration message (type=3)
-│       ├── SPUpdateMsg.java          # Firmware update fragment (type=4)
-│       ├── SPUpdateAckMsg.java       # Update fragment ACK (type=5)
-│       └── SPProtocol.java           # SP protocol implementation
+│   │   └── ...                       # SLP Klassen
+│   └── sp/                            # ★ Sensor Protocol (unsere eigene Implementierung)
+│       ├── SPConfiguration.java      # SP Konfiguration (Sensor-ID)
+│       ├── SPMsg.java                # Basis SP-Nachricht mit CRC32
+│       ├── SPDataMsg.java            # Messdaten-Nachricht (Typ 1)
+│       ├── SPAckMsg.java             # Bestätigungsnachricht (Typ 2)
+│       ├── SPReconfMsg.java          # Rekonfigurationsnachricht (Typ 3)
+│       ├── SPUpdateMsg.java          # Firmware-Update-Fragment (Typ 4)
+│       ├── SPUpdateAckMsg.java       # Update-Fragment-ACK (Typ 5)
+│       └── SPProtocol.java           # Implementierung des SP-Protokolls
 ├── test/java/
-│   └── sp/                            # ★ Unit tests
-│       ├── SPMsgTest.java            # Tests for all message classes
-│       └── SPProtocolTest.java       # Tests for protocol (with Mockito)
-├── build.gradle                       # Gradle build configuration
-├── sp_protocol_specification.md       # RFC-style protocol specification
-├── sp_update_sequence.md              # UML sequence diagram source
-└── README.md                          # This file
+│   └── sp/                            # ★ Unit Tests
+│       ├── SPMsgTest.java            # Tests für alle Nachrichtenklassen
+│       └── SPProtocolTest.java       # Protokoll-Tests (mit Mockito)
+├── build.gradle                       # Gradle Build-Konfiguration
+├── sp_protocol_specification.md       # Protokoll-Spezifikation im RFC-Stil
+├── sp_update_sequence.md              # Quellcode für das UML-Sequenzdiagramm
+└── README.md                          # Diese Datei
 ```
 
 ---
 
-## Protocol Specification
+## Protokoll-Spezifikation
 
-The full RFC-style protocol specification is available in [`sp_protocol_specification.md`](sp_protocol_specification.md).
+Die vollständige Protokoll-Spezifikation (im RFC-Stil) befindet sich in der Datei [`sp_protocol_specification.md`](sp_protocol_specification.md).
 
-### Wire Format
+### Übertragungsformat (Wire Format)
 
-All SP messages use a text-based format with space-separated fields:
+Alle SP-Nachrichten nutzen ein textbasiertes Format, bei dem die Felder durch Leerzeichen getrennt sind:
 
 ```
 sp <type> <sensorID> <seqNum> <checksum> <payload>
 ```
 
-On the PHY layer, this becomes:
+Auf dem PHY-Layer sieht das Ganze dann so aus:
 ```
 phy 9 sp <type> <sensorID> <seqNum> <checksum> <payload>
 ```
 
-### Message Types
+### Nachrichtentypen
 
-| Type | Name | Direction | Payload Format |
+| Typ | Name | Richtung | Payload Format |
 |------|------|-----------|---------------|
 | 1 | DATA | SS → DPS | `data <temp> <pH> <DO> <turbidity> <timestamp>` |
-| 2 | ACK | Both | `ack <ackedSeqNum>` |
+| 2 | ACK | Beide | `ack <ackedSeqNum>` |
 | 3 | RECONF | DPS → SS | `reconf <measFreq> <msgFreq>` |
 | 4 | UPDATE | DPS → SS | `update <fragIdx> <totalFrags> <fragData>` |
 | 5 | UPDATE_ACK | SS → DPS | `uack <ackedFragIdx>` |
 
-### CRC32 Checksum
+### CRC32 Prüfsumme
 
-The checksum is computed over: `<type> <sensorID> <seqNum> <payload>` (excluding the checksum field itself and the "sp" header). Uses `java.util.zip.CRC32`.
+Die Prüfsumme wird über den folgenden String berechnet: `<type> <sensorID> <seqNum> <payload>` (ohne das Checksum-Feld selbst und ohne den "sp"-Header). Dafür wird `java.util.zip.CRC32` genutzt.
 
 ---
 
-## Code Documentation
+## Code-Dokumentation
 
 ### SP Package (`sp/`)
 
-#### `SPMsg` — Base Message Class
-- Extends `core.Msg`
-- Provides CRC32 checksum computation via `computeChecksum(String)`
-- Implements hierarchical parsing: `parse()` validates the header and checksum, then dispatches to the appropriate sub-message type based on the type field
-- All sub-message types extend this class
+#### `SPMsg` — Basis-Nachrichtenklasse
+- Erbt von `core.Msg`
+- Stellt die Berechnung der CRC32-Prüfsumme bereit (`computeChecksum(String)`)
+- Nutzt hierarchisches Parsing: `parse()` validiert Header und Prüfsumme und leitet dann, abhängig vom type-Feld, an den passenden Untertyp weiter.
+- Alle anderen SP-Nachrichten erben von dieser Klasse.
 
-#### `SPDataMsg` — Measurement Data (Type 1)
-- Fields: `temperature` (float, °C), `pH` (float), `dissolvedOxygen` (float, mg/L), `turbidity` (float, NTU), `timestamp` (long, ms since epoch)
-- Created by the sensor client with measured values
-- `create()`: builds payload as `data <values...>`, computes CRC32
-- `parse()`: extracts measurement values from payload string
+#### `SPDataMsg` — Messdaten (Typ 1)
+- Felder: `temperature` (float, °C), `pH` (float), `dissolvedOxygen` (float, mg/L), `turbidity` (float, NTU), `timestamp` (long, ms seit Epoche)
+- Wird vom Sensor-Client erstellt und enthält die gemessenen Werte.
+- `create()`: Baut die Payload als `data <werte...>` zusammen und berechnet den CRC32-Wert.
+- `parse()`: Extrahiert die Werte aus dem Payload-String.
 
-#### `SPAckMsg` — Acknowledgement (Type 2)
-- Field: `ackedSeqNum` (int) — the sequence number being acknowledged
-- Used for both DATA and RECONF acknowledgements
-- Bidirectional: sent by both SS and DPS
+#### `SPAckMsg` — Bestätigung (Typ 2)
+- Feld: `ackedSeqNum` (int) — Die Sequenznummer, die bestätigt wird.
+- Wird für DATA- und RECONF-Bestätigungen verwendet.
+- Bidirektional: Kann sowohl von der SS als auch von der DPS gesendet werden.
 
-#### `SPReconfMsg` — Reconfiguration (Type 3)
-- Fields: `measurementFrequency` (int, seconds), `messageFrequency` (int, seconds)
-- Sent from DPS to sensor to change operational parameters
+#### `SPReconfMsg` — Rekonfiguration (Typ 3)
+- Felder: `measurementFrequency` (int, Sekunden), `messageFrequency` (int, Sekunden)
+- Wird von der DPS an den Sensor geschickt, um Parameter zur Laufzeit zu ändern.
 
-#### `SPUpdateMsg` — Firmware Update Fragment (Type 4)
-- Fields: `fragmentIndex` (int), `totalFragments` (int), `fragmentData` (String)
-- Sent from DPS to sensor; each fragment is individually acknowledged
+#### `SPUpdateMsg` — Firmware-Update-Fragment (Typ 4)
+- Felder: `fragmentIndex` (int), `totalFragments` (int), `fragmentData` (String)
+- Wird von der DPS gesendet. Jedes Fragment muss einzeln bestätigt werden.
 
-#### `SPUpdateAckMsg` — Update Fragment ACK (Type 5)
-- Field: `ackedFragmentIndex` (int)
-- Sent from sensor to DPS to acknowledge a single fragment
+#### `SPUpdateAckMsg` — Update-Fragment-ACK (Typ 5)
+- Feld: `ackedFragmentIndex` (int)
+- Wird vom Sensor an die DPS geschickt, um ein einzelnes Fragment zu bestätigen.
 
-#### `SPConfiguration` — Protocol Configuration
-- Extends `core.Configuration`
-- Field: `sensorID` (int) — identifies the target sensor
+#### `SPConfiguration` — Protokoll-Konfiguration
+- Erbt von `core.Configuration`
+- Feld: `sensorID` (int) — Identifiziert den Ziel-Sensor.
 
-#### `SPProtocol` — Protocol Implementation
-- Implements `core.Protocol`
-- Key methods:
-  - `send(String, Configuration)` / `sendMsg(SPMsg, PhyConfiguration)` — send messages via PHY
-  - `receive()` / `receive(int timeout)` — receive and parse SP messages from PHY
-  - `sendData(SPDataMsg, int, PhyConfiguration)` — send measurement + wait for ACK (3 retries)
-  - `sendAck(int, int, PhyConfiguration)` — send acknowledgement
-  - `sendReconf(SPReconfMsg, int, PhyConfiguration)` — send reconfiguration + wait for ACK
-  - `sendUpdate(String, int, int, PhyConfiguration)` — send multi-fragment update with stop-and-wait
-  - `sendUpdateAck(int, int, PhyConfiguration)` — send update fragment ACK
+#### `SPProtocol` — Protokoll-Implementierung
+- Implementiert `core.Protocol`
+- Wichtigste Methoden:
+  - `send(String, Configuration)` / `sendMsg(SPMsg, PhyConfiguration)` — Nachrichten über PHY versenden
+  - `receive()` / `receive(int timeout)` — SP-Nachrichten über PHY empfangen und parsen
+  - `sendData(SPDataMsg, int, PhyConfiguration)` — Daten senden + auf ACK warten (max. 3 Versuche)
+  - `sendAck(int, int, PhyConfiguration)` — Bestätigung (ACK) senden
+  - `sendReconf(SPReconfMsg, int, PhyConfiguration)` — Rekonfiguration senden + auf ACK warten
+  - `sendUpdate(String, int, int, PhyConfiguration)` — Update in Fragmenten senden (Stop-and-Wait)
+  - `sendUpdateAck(int, int, PhyConfiguration)` — Update-Fragment bestätigen
 
 ### Apps Package (`apps/`)
 
-#### `SPClient` — Sensor System Application
-- Simulates a water quality sensor
-- Periodically generates random (but realistic) measurement values
-- Sends DATA messages to the DPS and waits for ACK
-- Usage: `java apps.SPClient <sensorID> [serverPort]`
+#### `SPClient` — Sensor-Anwendung
+- Simuliert einen Wasserqualitätssensor.
+- Generiert periodisch zufällige (aber halbwegs realistische) Messwerte.
+- Sendet DATA-Nachrichten an die DPS und wartet brav auf das ACK.
+- Aufruf: `java apps.SPClient <sensorID> [serverPort]`
 
-#### `SPServer` — Data Processing Station Application
-- Receives and prints measurement data from arbitrary many sensors
-- Sends ACK to the correct sensor (uses sender's PHY address from received message)
-- Handles all SP message types
-- Usage: `java apps.SPServer [port]`
+#### `SPServer` — Datenverarbeitungsstation (DPS)
+- Empfängt die Messdaten von beliebig vielen Sensoren und gibt sie in der Konsole aus.
+- Schickt ACKs an den richtigen Sensor zurück (nutzt dafür die PHY-Adresse des Absenders).
+- Behandelt alle SP-Nachrichtentypen.
+- Aufruf: `java apps.SPServer [port]`
 
 ---
 
-## Building and Running
+## Kompilieren und Ausführen
 
-### Prerequisites
+### Voraussetzungen
 
-- Java 21 or higher (Tested with Java 25)
-- Maven (or run via IntelliJ IDE)
+- Java 21 oder neuer (Getestet mit Java 25)
+- Maven (oder einfach über eine IDE wie IntelliJ starten)
 
-### Build
+### Kompilieren (Build)
 
 ```bash
 mvn compile
 ```
 
-### Run Tests
+### Tests ausführen
 
 ```bash
 mvn test
 ```
 
-### Run the Server (Data Processing Station)
+### Server (DPS) starten
 
 ```bash
 mvn exec:java -Dexec.mainClass="apps.SPServer" -Dexec.args="4999"
 ```
 
-### Run a Sensor Client
+### Sensor-Client starten
 
 ```bash
 mvn exec:java -Dexec.mainClass="apps.SPClient" -Dexec.args="1 4999"
 ```
 
-You can run multiple clients with different sensor IDs simultaneously:
+Du kannst auch mehrere Clients mit unterschiedlichen Sensor-IDs gleichzeitig laufen lassen:
 ```bash
 mvn exec:java -Dexec.mainClass="apps.SPClient" -Dexec.args="1 4999"
 mvn exec:java -Dexec.mainClass="apps.SPClient" -Dexec.args="2 4999"
@@ -211,62 +211,62 @@ mvn exec:java -Dexec.mainClass="apps.SPClient" -Dexec.args="3 4999"
 
 ---
 
-## Testing
+## Tests
 
 ### Unit Tests
 
-All tests are in `src/test/java/sp/`:
+Alle Tests liegen im Ordner `src/test/java/sp/`:
 
-- **`SPMsgTest`** — Tests for all message classes:
-  - Message creation and wire format verification
-  - Round-trip (create → serialize → parse) for all 5 message types
-  - CRC32 checksum computation consistency
-  - Error cases: invalid headers, missing fields, bad checksums, unknown types
+- **`SPMsgTest`** — Tests für alle Nachrichten:
+  - Erstellung von Nachrichten und Check des Wire-Formats.
+  - Round-trip Tests (Erstellen → Serialisieren → Parsen) für alle 5 Nachrichtentypen.
+  - Überprüfung der CRC32-Prüfsummen-Berechnung.
+  - Edge Cases und Fehler: Falsche Header, fehlende Felder, kaputte Prüfsummen, unbekannte Typen.
 
-- **`SPProtocolTest`** — Tests for the protocol layer (using Mockito):
-  - Receiving valid DATA and ACK messages via mocked PHY
-  - Rejecting messages with wrong protocol ID
-  - Send data with successful ACK
-  - Timeout and retry behavior (3 attempts then failure)
-  - ACK content verification
-  - Recovery after timeout (retry then success)
-  - Corrupted ACK handling
+- **`SPProtocolTest`** — Tests für die Protokollschicht (mit Mockito gemockt):
+  - Empfang gültiger DATA- und ACK-Nachrichten über die simulierte PHY-Schicht.
+  - Verwerfen von Nachrichten mit der falschen Protokoll-ID.
+  - Senden von Daten mit erfolgreichem ACK.
+  - Timeout und Retry-Logik (3 Versuche, danach Abbruch).
+  - Überprüfung des ACK-Inhalts.
+  - Recovery nach einem Timeout (Retry klappt dann beim zweiten Mal).
+  - Umgang mit fehlerhaften (corrupted) ACKs.
 
-### Running Tests
+### Tests laufen lassen
 
 ```bash
 mvn test
 ```
 
-Test reports are generated in the `target/surefire-reports/` directory.
+Die Testberichte (Test Reports) landen danach im Ordner `target/surefire-reports/`.
 
 ---
 
-## UML Sequence Diagram
+## UML-Sequenzdiagramm
 
-The UML sequence diagram for the firmware update message flow is available in [`sp_update_sequence.md`](sp_update_sequence.md).
+Das UML-Sequenzdiagramm für den Firmware-Update-Ablauf liegt in der Datei [`sp_update_sequence.md`](sp_update_sequence.md).
 
-To generate the diagram:
-1. Go to https://sequencediagram.org/
-2. Paste the diagram source code from the file
-3. Export as PNG
+So kannst du dir das Diagramm anschauen:
+1. Öffne https://sequencediagram.org/
+2. Kopiere den Code aus der MD-Datei dort hinein.
+3. Exportiere es einfach als PNG.
 
-The diagram covers:
-- Normal multi-fragment update flow (stop-and-wait)
-- Error scenario: fragment lost → retry
-- Error scenario: ACK lost → duplicate detection → re-ACK
-- Error scenario: max retries exhausted → update abort
+Das Diagramm zeigt folgende Abläufe:
+- Normales, erfolgreiches Update mit mehreren Fragmenten (Stop-and-Wait)
+- Fehlerfall: Ein Fragment geht verloren → Neuübertragung (Retry)
+- Fehlerfall: Das ACK geht verloren → Sender schickt nochmal → Empfänger merkt, dass es ein Duplikat ist und schickt nochmal ein ACK
+- Fehlerfall: Maximale Anzahl an Retries aufgebraucht → Update bricht ab
 
 ---
 
-## Design Decisions
+## Design-Entscheidungen
 
-1. **Text-based wire format** — Matches the existing framework pattern (PHY, SLP). Human-readable for debugging. Fields separated by spaces.
+1. **Textbasiertes Format (Wire Format)** — Passt zum restlichen Framework (PHY, SLP). Ist super leicht zu debuggen, da alles lesbar ist. Die Felder sind einfach per Leerzeichen getrennt.
 
-2. **Hierarchical message parsing** — `SPMsg.parse()` dispatches to sub-types, following the same pattern as `SLPMsg` → `SLPRegMsg` → `SLPRegRequestMsg/SLPRegResponseMsg`.
+2. **Hierarchisches Parsing** — `SPMsg.parse()` schaut sich den Header an und delegiert dann an die Unterklassen. Das ist quasi das gleiche Pattern wie bei `SLPMsg` → `SLPRegMsg` → `SLPRegRequestMsg/SLPRegResponseMsg`.
 
-3. **CRC32 over content** — Checksum covers type, sensorID, seqNum, and payload but NOT the checksum field itself (to avoid circular dependency). The "sp" header is also excluded since it's constant.
+3. **CRC32 über den Inhalt** — Die Prüfsumme läuft über Type, SensorID, SeqNum und Payload, aber absichtlich NICHT über das Checksum-Feld selbst. Der "sp"-Header bleibt auch draußen, weil der sowieso immer gleich ist.
 
-4. **Stop-and-wait ARQ** — Simple, reliable, and appropriate for the low-bandwidth sensor scenario. Each message must be acknowledged before the next is sent.
+4. **Stop-and-Wait ARQ** — Das ist einfach umzusetzen, absolut zuverlässig und für die geringe Bandbreite von Sensoren völlig ausreichend. Bevor die nächste Nachricht rausgeht, muss die alte bestätigt sein.
 
-5. **Extensibility** — Adding a new message type requires: (1) creating a new class extending `SPMsg`, (2) adding a type constant, (3) adding a case in `SPMsg.parse()`. No changes to the protocol or existing messages needed.
+5. **Erweiterbarkeit** — Wenn wir einen neuen Nachrichtentyp brauchen, müssen wir nur: (1) Eine neue Klasse anlegen, die von `SPMsg` erbt, (2) eine Konstante für den neuen Typen vergeben und (3) einen neuen Case im Switch-Block in `SPMsg.parse()` hinzufügen. Das Protokoll selbst und die bestehenden Nachrichten müssen nicht angefasst werden.

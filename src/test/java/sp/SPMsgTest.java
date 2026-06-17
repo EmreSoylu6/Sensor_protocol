@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-// unit tests for all sp message classes
+// Unit-Tests für alle SP-Nachrichtenklassen
 public class SPMsgTest {
 
     // ===== SPMsg base class tests =====
@@ -18,7 +18,7 @@ public class SPMsgTest {
         String content = "1 100 0 data 25.0 7.0 8.0 100.0 1234567890";
         long checksum1 = SPMsg.computeChecksum(content);
         long checksum2 = SPMsg.computeChecksum(content);
-        assertEquals(checksum1, checksum2, "Checksum should be deterministic");
+        assertEquals(checksum1, checksum2, "Die Prüfsumme sollte deterministisch sein");
     }
 
     @Test
@@ -43,7 +43,7 @@ public class SPMsgTest {
     @Test
     void testParseBadChecksum() {
         SPMsg msg = new SPMsg();
-        // Valid format but wrong checksum (99999)
+        // Gültiges Format, aber falsche Prüfsumme (99999)
         assertThrows(BadChecksumException.class, () -> msg.parse("sp 1 100 0 99999 data 25.0 7.0 8.0 100.0 1234567890"));
     }
 
@@ -56,8 +56,8 @@ public class SPMsgTest {
     @Test
     void testParseUnknownType() {
         SPMsg msg = new SPMsg();
-        // Type 99 doesn't exist - but we need a valid checksum for it to get past checksum check
-        // So this will actually throw BadChecksumException first - let's just test for IWProtocolException
+        // Typ 99 existiert nicht - aber wir benötigen eine gültige Prüfsumme, um an der Prüfung vorbeizukommen
+        // Daher wird dies eigentlich zuerst eine BadChecksumException werfen - wir testen einfach auf IWProtocolException
         assertThrows(IWProtocolException.class, () -> msg.parse("sp 99 100 0 12345 somedata"));
     }
 
@@ -76,11 +76,11 @@ public class SPMsgTest {
         msg.create(null);
 
         String wireFormat = new String(msg.getDataBytes());
-        assertTrue(wireFormat.startsWith("sp 1 100 0 "), "Should start with SP header and type 1");
-        assertTrue(wireFormat.contains("data "), "Should contain data header");
-        assertTrue(wireFormat.contains("25.5"), "Should contain temperature");
-        assertTrue(wireFormat.contains("7.2"), "Should contain pH");
-        assertTrue(wireFormat.contains("1234567890"), "Should contain timestamp");
+        assertTrue(wireFormat.startsWith("sp 1 100 0 "), "Sollte mit SP-Header und Typ 1 beginnen");
+        assertTrue(wireFormat.contains("data "), "Sollte den Data-Header enthalten");
+        assertTrue(wireFormat.contains("25.5"), "Sollte die Temperatur enthalten");
+        assertTrue(wireFormat.contains("7.2"), "Sollte den pH-Wert enthalten");
+        assertTrue(wireFormat.contains("1234567890"), "Sollte den Zeitstempel enthalten");
     }
 
     @Test
@@ -97,7 +97,7 @@ public class SPMsgTest {
 
         String wireFormat = new String(original.getDataBytes());
 
-        // Parse back
+        // Wieder zurück parsen
         SPMsg parser = new SPMsg();
         SPMsg parsed = (SPMsg) parser.parse(wireFormat);
 
@@ -149,8 +149,8 @@ public class SPMsgTest {
         msg.create(null);
 
         String wireFormat = new String(msg.getDataBytes());
-        assertTrue(wireFormat.startsWith("sp 2 100 1 "), "Should start with SP header and type 2");
-        assertTrue(wireFormat.contains("ack 0"), "Should contain ack header with acked seq num");
+        assertTrue(wireFormat.startsWith("sp 2 100 1 "), "Sollte mit SP-Header und Typ 2 beginnen");
+        assertTrue(wireFormat.contains("ack 0"), "Sollte den ACK-Header mit bestätigter SeqNum enthalten");
     }
 
     @Test
@@ -191,8 +191,8 @@ public class SPMsgTest {
         msg.create(null);
 
         String wireFormat = new String(msg.getDataBytes());
-        assertTrue(wireFormat.startsWith("sp 3 300 10 "), "Should start with SP header and type 3");
-        assertTrue(wireFormat.contains("reconf 30 60"), "Should contain reconf frequencies");
+        assertTrue(wireFormat.startsWith("sp 3 300 10 "), "Sollte mit SP-Header und Typ 3 beginnen");
+        assertTrue(wireFormat.contains("reconf 30 60"), "Sollte die Rekonfigurierungs-Frequenzen enthalten");
     }
 
     @Test
@@ -236,8 +236,8 @@ public class SPMsgTest {
         msg.create(null);
 
         String wireFormat = new String(msg.getDataBytes());
-        assertTrue(wireFormat.startsWith("sp 4 400 20 "), "Should start with SP header and type 4");
-        assertTrue(wireFormat.contains("update 0 5 DEADBEEF01020304"), "Should contain update fragment data");
+        assertTrue(wireFormat.startsWith("sp 4 400 20 "), "Sollte mit SP-Header und Typ 4 beginnen");
+        assertTrue(wireFormat.contains("update 0 5 DEADBEEF01020304"), "Sollte Update-Fragment-Daten enthalten");
     }
 
     @Test
@@ -277,7 +277,7 @@ public class SPMsgTest {
         original.setSeqNum(0);
         original.setFragmentIndex(0);
         original.setTotalFragments(1);
-        original.setFragmentData("firmware data with spaces");
+        original.setFragmentData("Firmware-Daten mit Leerzeichen");
         original.create(null);
 
         String wireFormat = new String(original.getDataBytes());
@@ -287,7 +287,7 @@ public class SPMsgTest {
 
         assertInstanceOf(SPUpdateMsg.class, parsed);
         SPUpdateMsg parsedUpdate = (SPUpdateMsg) parsed;
-        assertEquals("firmware data with spaces", parsedUpdate.getFragmentData());
+        assertEquals("Firmware-Daten mit Leerzeichen", parsedUpdate.getFragmentData());
     }
 
     // ===== SPUpdateAckMsg tests =====
@@ -301,8 +301,8 @@ public class SPMsgTest {
         msg.create(null);
 
         String wireFormat = new String(msg.getDataBytes());
-        assertTrue(wireFormat.startsWith("sp 5 400 21 "), "Should start with SP header and type 5");
-        assertTrue(wireFormat.contains("uack 0"), "Should contain uack header with fragment index");
+        assertTrue(wireFormat.startsWith("sp 5 400 21 "), "Sollte mit SP-Header und Typ 5 beginnen");
+        assertTrue(wireFormat.contains("uack 0"), "Sollte den UACK-Header mit Fragment-Index enthalten");
     }
 
     @Test

@@ -12,7 +12,7 @@ import sp.SPDataMsg;
 import sp.SPProtocol;
 import exceptions.IWProtocolException;
 
-// client app for the sensor system
+// Client-Anwendung für das Sensorsystem
 public class SPClient {
     private static final String SERVERNAME = "localhost";
     private static final int DEFAULT_SERVER_PORT = 4999;
@@ -20,9 +20,9 @@ public class SPClient {
     
     public static void main(String[] args) {
         if (args.length < 1) {
-            System.out.println("Usage: java apps.SPClient <sensorID> [serverPort]");
-            System.out.println("  sensorID:   unique sensor identifier (int)");
-            System.out.println("  serverPort: server port (default: " + DEFAULT_SERVER_PORT + ")");
+            System.out.println("Aufruf: java apps.SPClient <sensorID> [serverPort]");
+            System.out.println("  sensorID:   Eindeutige ID des Sensors (int)");
+            System.out.println("  serverPort: Port des Servers (Standard: " + DEFAULT_SERVER_PORT + ")");
             return;
         }
         
@@ -30,7 +30,7 @@ public class SPClient {
         try {
             sensorID = Integer.parseInt(args[0]);
         } catch (NumberFormatException e) {
-            System.out.println("Invalid sensor ID: " + args[0]);
+            System.out.println("Ungültige Sensor-ID: " + args[0]);
             return;
         }
         
@@ -39,42 +39,42 @@ public class SPClient {
             try {
                 serverPort = Integer.parseInt(args[1]);
             } catch (NumberFormatException e) {
-                System.out.println("Invalid server port: " + args[1]);
+                System.out.println("Ungültiger Server-Port: " + args[1]);
                 return;
             }
         }
         
-        // Use sensorID + 5000 as local port to avoid conflicts
+        // Wir nutzen sensorID + 5000 als lokalen Port, um Konflikte zu vermeiden
         int clientPort = sensorID + 5000;
         
-        // Initialize PHY layer
+        // PHY Layer initialisieren
         PhyProtocol phy = new PhyProtocol(clientPort);
         
-        // Initialize SP protocol
+        // SP Protokoll initialisieren
         SPProtocol sp = new SPProtocol(phy);
         
-        // Create PHY configuration for the server
+        // PHY Konfiguration für den Server erstellen
         PhyConfiguration phyConfig;
         try {
             phyConfig = new PhyConfiguration(InetAddress.getByName(SERVERNAME), serverPort, Protocol.proto_id.SP);
         } catch (UnknownHostException e) {
-            System.out.println("Cannot resolve server: " + SERVERNAME);
+            System.out.println("Kann Server nicht finden: " + SERVERNAME);
             e.printStackTrace();
             return;
         }
         
         System.out.println("=== SP Sensor Client ===");
         System.out.println("Sensor ID: " + sensorID);
-        System.out.println("Client port: " + clientPort);
+        System.out.println("Client Port: " + clientPort);
         System.out.println("Server: " + SERVERNAME + ":" + serverPort);
-        System.out.println("Sending measurements every " + MEASUREMENT_INTERVAL_MS / 1000 + " seconds...");
+        System.out.println("Sende Messwerte alle " + MEASUREMENT_INTERVAL_MS / 1000 + " Sekunden...");
         System.out.println();
         
         Random random = new Random();
         int measurementCount = 0;
         
         while (true) {
-            // Create measurement with random but realistic values
+            // Erzeuge Messung mit zufälligen, aber realistischen Werten
             SPDataMsg dataMsg = new SPDataMsg();
             dataMsg.setTemperature(10.0f + random.nextFloat() * 25.0f);      // 10-35 °C
             dataMsg.setPH(6.0f + random.nextFloat() * 3.0f);                 // 6.0-9.0 pH
@@ -83,25 +83,25 @@ public class SPClient {
             dataMsg.setTimestamp(System.currentTimeMillis());
             
             measurementCount++;
-            System.out.println("[Measurement #" + measurementCount + "]");
-            System.out.println("  Temperature:      " + dataMsg.getTemperature() + " °C");
-            System.out.println("  pH:               " + dataMsg.getPH());
-            System.out.println("  Dissolved Oxygen: " + dataMsg.getDissolvedOxygen() + " mg/L");
-            System.out.println("  Turbidity:        " + dataMsg.getTurbidity() + " NTU");
-            System.out.println("  Timestamp:        " + dataMsg.getTimestamp());
+            System.out.println("[Messung #" + measurementCount + "]");
+            System.out.println("  Temperatur:          " + dataMsg.getTemperature() + " °C");
+            System.out.println("  pH-Wert:             " + dataMsg.getPH());
+            System.out.println("  Gelöster Sauerstoff: " + dataMsg.getDissolvedOxygen() + " mg/L");
+            System.out.println("  Trübung:             " + dataMsg.getTurbidity() + " NTU");
+            System.out.println("  Zeitstempel:         " + dataMsg.getTimestamp());
             
             try {
                 sp.sendData(dataMsg, sensorID, phyConfig);
-                System.out.println("  -> Sent successfully, ACK received.");
+                System.out.println("  -> Erfolgreich gesendet, ACK erhalten.");
             } catch (IOException | IWProtocolException e) {
-                System.out.println("  -> FAILED to send: " + e.getMessage());
+                System.out.println("  -> Fehler beim Senden: " + e.getMessage());
             }
             System.out.println();
             
             try {
                 Thread.sleep(MEASUREMENT_INTERVAL_MS);
             } catch (InterruptedException e) {
-                System.out.println("Sensor interrupted, shutting down.");
+                System.out.println("Sensor wurde unterbrochen, fahre herunter.");
                 break;
             }
         }

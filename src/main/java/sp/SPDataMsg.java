@@ -4,7 +4,7 @@ import core.Msg;
 import exceptions.IWProtocolException;
 import exceptions.IllegalMsgException;
 
-// sensor measurement data message
+// Messdaten-Nachricht des Sensors
 public class SPDataMsg extends SPMsg {
     protected static final String DATA_HEADER = "data ";
     
@@ -18,7 +18,7 @@ public class SPDataMsg extends SPMsg {
         this.type = TYPE_DATA;
     }
     
-    // Getters and setters
+    // Getter und Setter
     public float getTemperature() { return temperature; }
     public void setTemperature(float temperature) { this.temperature = temperature; }
     
@@ -34,25 +34,25 @@ public class SPDataMsg extends SPMsg {
     public long getTimestamp() { return timestamp; }
     public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
     
-    // create a data message with measurement values
+    // Erstellt eine Daten-Nachricht mit Messwerten
     @Override
     protected void create(String sentence) {
         this.payload = DATA_HEADER + temperature + " " + pH + " " + dissolvedOxygen + " " + turbidity + " " + timestamp;
         super.create(this.payload);
     }
     
-    // parse an incoming data message
+    // Parst eine eingehende Daten-Nachricht
     @Override
     protected Msg parse(String sentence) throws IWProtocolException {
         this.dataBytes = sentence.getBytes();
         
-        // Remove SP header
+        // SP-Header entfernen
         if (!sentence.startsWith(SP_HEADER)) {
             throw new IllegalMsgException();
         }
         String content = sentence.substring(SP_HEADER.length());
         
-        // Split: type sensorID seqNum checksum payload...
+        // Aufteilen: type sensorID seqNum checksum payload...
         String[] parts = content.split("\\s+", 5);
         if (parts.length < 5) {
             throw new IllegalMsgException();
@@ -70,7 +70,7 @@ public class SPDataMsg extends SPMsg {
         this.payload = parts[4];
         this.data = this.payload;
         
-        // Parse payload: data <temp> <pH> <DO> <turbidity> <timestamp>
+        // Payload auswerten: data <temp> <pH> <DO> <turbidity> <timestamp>
         if (!this.payload.startsWith(DATA_HEADER)) {
             throw new IllegalMsgException();
         }

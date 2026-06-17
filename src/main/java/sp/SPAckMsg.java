@@ -4,7 +4,7 @@ import core.Msg;
 import exceptions.IWProtocolException;
 import exceptions.IllegalMsgException;
 
-// acknowledgement message
+// Bestätigungsnachricht (ACK)
 public class SPAckMsg extends SPMsg {
     protected static final String ACK_HEADER = "ack ";
     
@@ -17,14 +17,14 @@ public class SPAckMsg extends SPMsg {
     public int getAckedSeqNum() { return ackedSeqNum; }
     public void setAckedSeqNum(int ackedSeqNum) { this.ackedSeqNum = ackedSeqNum; }
     
-    // create an ack message
+    // Erstellt eine ACK-Nachricht
     @Override
     protected void create(String sentence) {
         this.payload = ACK_HEADER + ackedSeqNum;
         super.create(this.payload);
     }
     
-    // parse an incoming ack message
+    // Parst eine eingehende ACK-Nachricht
     @Override
     protected Msg parse(String sentence) throws IWProtocolException {
         this.dataBytes = sentence.getBytes();
@@ -51,7 +51,7 @@ public class SPAckMsg extends SPMsg {
         this.payload = parts[4];
         this.data = this.payload;
         
-        // Parse payload: ack <ackedSeqNum>
+        // Payload auswerten: ack <ackedSeqNum>
         if (!this.payload.startsWith(ACK_HEADER)) {
             throw new IllegalMsgException();
         }

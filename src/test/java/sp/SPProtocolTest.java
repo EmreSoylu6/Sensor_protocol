@@ -18,10 +18,10 @@ import phy.PhyConfiguration;
 import phy.PhyMsg;
 import phy.PhyProtocol;
 
-// unit tests for spprotocol using mockito to mock the phy layer
+// Unit-Tests für SPProtocol unter Verwendung von Mockito zum Mocken der PHY-Schicht
 class SPProtocolTest {
 
-    // Helper class to expose the protected PhyMsg constructor and parse method for testing
+    // Hilfsklasse, um den geschützten PhyMsg-Konstruktor und die Parse-Methode für Tests zugänglich zu machen
     static class TestPhyMsg extends PhyMsg {
         public TestPhyMsg(PhyConfiguration config) {
             super(config);
@@ -49,7 +49,7 @@ class SPProtocolTest {
             phyConfig = new PhyConfiguration(InetAddress.getByName(clientName), clientPort, Protocol.proto_id.SP);
             testMsg = new TestPhyMsg(phyConfig);
         } catch (UnknownHostException e) {
-            fail("Setup failed: " + e.getMessage());
+            fail("Setup fehlgeschlagen: " + e.getMessage());
         }
 
         phyProtocolMock = mock(PhyProtocol.class);
@@ -59,7 +59,7 @@ class SPProtocolTest {
 
     @Test
     void testReceiveDataMsg() throws IOException, IWProtocolException {
-        // Create a valid SP data message wrapped in PHY
+        // Erstellt eine gültige SP-Daten-Nachricht, verpackt in PHY
         SPDataMsg dataMsg = new SPDataMsg();
         dataMsg.setSensorID(sensorID);
         dataMsg.setSeqNum(0);
@@ -72,7 +72,7 @@ class SPProtocolTest {
 
         String spMsgStr = new String(dataMsg.getDataBytes());
 
-        // Wrap in PHY message
+        // In PHY-Nachricht verpacken
         testMsg = (TestPhyMsg) testMsg.parse("phy 9 " + spMsgStr);
 
         when(phyProtocolMock.receive()).thenReturn(testMsg);
@@ -109,12 +109,12 @@ class SPProtocolTest {
 
     @Test
     void testReceiveWrongProtocol() throws IOException, IWProtocolException {
-        // Create a PHY message with SLP protocol ID (not SP)
+        // Erstellt eine PHY-Nachricht mit SLP-Protokoll-ID (nicht SP)
         PhyConfiguration slpConfig;
         try {
             slpConfig = new PhyConfiguration(InetAddress.getByName(clientName), clientPort, Protocol.proto_id.SLP);
         } catch (UnknownHostException e) {
-            fail("Setup failed");
+            fail("Setup fehlgeschlagen");
             return;
         }
         TestPhyMsg slpMsg = new TestPhyMsg(slpConfig);
@@ -130,11 +130,11 @@ class SPProtocolTest {
 
     @Test
     void testSendDataSuccess() throws IOException, IWProtocolException {
-        // Prepare the ACK response
+        // ACK-Antwort vorbereiten
         SPAckMsg ackResponse = new SPAckMsg();
         ackResponse.setSensorID(sensorID);
         ackResponse.setSeqNum(1);
-        ackResponse.setAckedSeqNum(0); // ACKs seqNum 0
+        ackResponse.setAckedSeqNum(0); // Bestätigt seqNum 0
         ackResponse.create(null);
 
         String ackStr = new String(ackResponse.getDataBytes());
@@ -155,7 +155,7 @@ class SPProtocolTest {
         try {
             serverConfig = new PhyConfiguration(InetAddress.getByName(serverName), serverPort, Protocol.proto_id.SP);
         } catch (UnknownHostException e) {
-            fail("Setup failed");
+            fail("Setup fehlgeschlagen");
             return;
         }
 
@@ -181,7 +181,7 @@ class SPProtocolTest {
         try {
             serverConfig = new PhyConfiguration(InetAddress.getByName(serverName), serverPort, Protocol.proto_id.SP);
         } catch (UnknownHostException e) {
-            fail("Setup failed");
+            fail("Setup fehlgeschlagen");
             return;
         }
 
@@ -198,7 +198,7 @@ class SPProtocolTest {
         try {
             serverConfig = new PhyConfiguration(InetAddress.getByName(serverName), serverPort, Protocol.proto_id.SP);
         } catch (UnknownHostException e) {
-            fail("Setup failed");
+            fail("Setup fehlgeschlagen");
             return;
         }
 
@@ -213,14 +213,14 @@ class SPProtocolTest {
         try {
             serverConfig = new PhyConfiguration(InetAddress.getByName(serverName), serverPort, Protocol.proto_id.SP);
         } catch (UnknownHostException e) {
-            fail("Setup failed");
+            fail("Setup fehlgeschlagen");
             return;
         }
 
         SPProtocol sp = new SPProtocol(phyProtocolMock);
         sp.sendAck(42, sensorID, serverConfig);
 
-        // Verify the message sent contains "ack 42"
+        // Überprüfen, ob die gesendete Nachricht "ack 42" enthält
         verify(phyProtocolMock).send(argThat(s -> s.contains("ack 42")), any(PhyConfiguration.class));
     }
 
@@ -232,7 +232,7 @@ class SPProtocolTest {
         try {
             serverConfig = new PhyConfiguration(InetAddress.getByName(serverName), serverPort, Protocol.proto_id.SP);
         } catch (UnknownHostException e) {
-            fail("Setup failed");
+            fail("Setup fehlgeschlagen");
             return;
         }
 
@@ -247,7 +247,7 @@ class SPProtocolTest {
         try {
             serverConfig = new PhyConfiguration(InetAddress.getByName(serverName), serverPort, Protocol.proto_id.SP);
         } catch (UnknownHostException e) {
-            fail("Setup failed");
+            fail("Setup fehlgeschlagen");
             return;
         }
 
@@ -270,7 +270,7 @@ class SPProtocolTest {
         String ackStr = new String(ackResponse.getDataBytes());
         TestPhyMsg phyAck = (TestPhyMsg) testMsg.parse("phy 9 " + ackStr);
 
-        // First call times out, second succeeds
+        // Erster Aufruf hat Timeout, zweiter ist erfolgreich
         when(phyProtocolMock.receive(anyInt()))
                 .thenThrow(new SocketTimeoutException())
                 .thenReturn(phyAck);
@@ -288,7 +288,7 @@ class SPProtocolTest {
         try {
             serverConfig = new PhyConfiguration(InetAddress.getByName(serverName), serverPort, Protocol.proto_id.SP);
         } catch (UnknownHostException e) {
-            fail("Setup failed");
+            fail("Setup fehlgeschlagen");
             return;
         }
 
@@ -298,18 +298,18 @@ class SPProtocolTest {
 
     @Test
     void testCorruptedAckCausesRetry() throws IOException, IWProtocolException {
-        // First receive returns a corrupted message (wrong protocol)
+        // Erster Empfang liefert eine beschädigte Nachricht zurück (falsches Protokoll)
         PhyConfiguration slpConfig;
         try {
             slpConfig = new PhyConfiguration(InetAddress.getByName(clientName), clientPort, Protocol.proto_id.SLP);
         } catch (UnknownHostException e) {
-            fail("Setup failed");
+            fail("Setup fehlgeschlagen");
             return;
         }
         TestPhyMsg corruptedMsg = new TestPhyMsg(slpConfig);
         corruptedMsg = (TestPhyMsg) corruptedMsg.parse("phy 5 slp reg req 5000");
 
-        // After 3 corrupted messages, should give up
+        // Nach 3 beschädigten Nachrichten sollte aufgegeben werden
         when(phyProtocolMock.receive(anyInt())).thenReturn(corruptedMsg);
 
         SPProtocol sp = new SPProtocol(phyProtocolMock);
@@ -325,7 +325,7 @@ class SPProtocolTest {
         try {
             serverConfig = new PhyConfiguration(InetAddress.getByName(serverName), serverPort, Protocol.proto_id.SP);
         } catch (UnknownHostException e) {
-            fail("Setup failed");
+            fail("Setup fehlgeschlagen");
             return;
         }
 
